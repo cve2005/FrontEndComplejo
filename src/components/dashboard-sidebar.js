@@ -65,6 +65,12 @@ const items = [
     role: ROLE_ADMIN
   },
   {
+    href: '/horarios',
+    icon: (<CogIcon fontSize="small" />),
+    title: 'Gestion de Horarios',
+    role: ROLE_ADMIN
+  },
+  {
     href: '/disciplinas',
     icon: (<CogIcon fontSize="small" />),
     title: 'Gestión de Disciplina',

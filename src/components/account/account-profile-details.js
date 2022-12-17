@@ -14,17 +14,32 @@ import { useFormik } from "formik";
 import axios from "axios";
 
 export const AccountProfileDetails = (props) => {
-  const {usuario} = props;
+  const { usuario } = props;
 
-  useEffect(()=>{
-    formik.setFieldValue("numdocumento",usuario.numeroDocumento);
-    formik.setFieldValue("tipoDocumento","usuario.tipoDocumento");
-  },[]);
+  const [showChangePass, setShowChangePass] = useState(false);
+
+  useEffect(() => {
+    console.log("!!USUARIO", props);
+    formik.setFieldValue("numdocumento", usuario.numeroDocumento);
+    formik.setFieldValue("tipoDocumento", usuario.tipoDocumento);
+    formik.setFieldValue("celular", usuario.celular);
+    formik.setFieldValue("nombre", usuario.nombre);
+    formik.setFieldValue("apePaterno", usuario.apePaterno);
+    formik.setFieldValue("apeMaterno", usuario.apeMaterno);
+    formik.setFieldValue("correo", usuario.correo);
+  }, [usuario]);
 
   const formik = useFormik({
     initialValues: {
-      numdocumento:"",
-      tipoDocumento:""
+      numdocumento: "",
+      tipoDocumento: "",
+      celular: "",
+      nombre: "",
+      apePaterno: "",
+      apeMaterno: "",
+      correo: "",
+      clave: "",
+      reclave:""
     },
     validationSchema: Yup.object({
       correo: Yup.string()
@@ -32,32 +47,35 @@ export const AccountProfileDetails = (props) => {
         .max(255)
         .required("Correo es requerido"),
       clave: Yup.string().max(255).required("Contraseña requerida"),
+      reclave: Yup.string()
+      .oneOf([Yup.ref('clave'), null], 'La contraseña no coincide')
     }),
     onSubmit: async (values, { resetForm }) => {
       console.log(JSON.stringify(values));
       //Router.push("/").catch(console.error);
-      handleLoading(true);
+      //handleLoading(true);
+      const id = sessionStorage.getItem("id");
       const response = await axios({
         method: "post",
-        url: "http://localhost:8088/v2/api/usuario",
-        data: values,
+        url: "http://localhost:8088/v2/api/usuario/act",
+        data: {
+          ...values,
+          codigo:id
+        },
       });
-      handleLoading(false);
-      resetForm();
-      onClose();
-      setAlertMessage("Usuario Registrado");
-      setShowSnackbar(true);
+     // handleLoading(false);
+      //resetForm();
+      //onClose();
+      //setAlertMessage("Usuario Registrado");
+      //setShowSnackbar(true);
       console.log("AXIOS RESPONSE->", response.data);
     },
   });
 
- 
-
   return (
     <form autoComplete="off" noValidate onSubmit={formik.handleSubmit} {...props}>
       <Card>
-        <CardHeader title="Datos de la cuenta" />
-
+        <CardHeader title="Datos de la cuenta" sx={{ py: 0.5 }} />
         <CardContent>
           <Grid container spacing={2}>
             <Grid item md={6} xs={12}>
@@ -66,6 +84,7 @@ export const AccountProfileDetails = (props) => {
                 label="Tipo de Documento"
                 margin="dense"
                 name="tipoDocumento"
+                disabled
                 value={formik.values.tipoDocumento}
               />
             </Grid>
@@ -87,7 +106,7 @@ export const AccountProfileDetails = (props) => {
                 margin="dense"
                 name="nombres"
                 disabled
-                value={usuario.nombres}
+                value={formik.values.nombre}
               />
             </Grid>
             <Grid item md={6} xs={12}>
@@ -97,7 +116,7 @@ export const AccountProfileDetails = (props) => {
                 margin="dense"
                 name="apepat"
                 disabled
-                value={usuario.apepat}
+                value={formik.values.apePaterno}
               />
             </Grid>
             <Grid item md={6} xs={12}>
@@ -107,7 +126,7 @@ export const AccountProfileDetails = (props) => {
                 margin="dense"
                 name="apemat"
                 disabled
-                value={usuario.apemat}
+                value={formik.values.apeMaterno}
               />
             </Grid>
             <Grid item md={6} xs={12}>
@@ -116,8 +135,7 @@ export const AccountProfileDetails = (props) => {
                 label="Correo"
                 margin="dense"
                 name="correo"
-                disabled
-                value={usuario.correo}
+                value={formik.values.correo}
               />
             </Grid>
             <Grid item md={6} xs={12}>
@@ -126,20 +144,49 @@ export const AccountProfileDetails = (props) => {
                 label="Celular"
                 margin="dense"
                 name="celular"
-                value={usuario.celular}
+                value={formik.values.celular}
               />
             </Grid>
+            <Grid
+              item
+              md={6}
+              xs={12}
+              sx={{
+                my: 1.65,
+              }}
+            >
+              <Button variant="outlined" onClick={() => setShowChangePass(true)}>
+                Cambiar Contraseña
+              </Button>
+            </Grid>
+
             <Grid item md={6} xs={12}>
-              <TextField
+              {showChangePass && <TextField
+               error={Boolean(formik.touched.clave && formik.errors.clave)}
+               helperText={formik.touched.clave && formik.errors.clave}
                 fullWidth
-                label="Contraseña"
+                label="Nueva contraseña"
                 margin="dense"
                 name="clave"
                 onBlur={formik.handleBlur}
                 onChange={formik.handleChange}
                 type="password"
-                value={usuario.clave}
-              />
+                value={formik.values.clave}
+              />}
+            </Grid>
+            <Grid item md={6} xs={12}>
+            {showChangePass && <TextField
+            error={Boolean(formik.touched.reclave && formik.errors.reclave)}
+            helperText={formik.touched.reclave && formik.errors.reclave}
+                fullWidth
+                label="Repetir contraseña"
+                margin="dense"
+                name="reclave"
+                onBlur={formik.handleBlur}
+                onChange={formik.handleChange}
+                type="password"
+                value={formik.values.reclave}
+              />}
             </Grid>
           </Grid>
         </CardContent>
@@ -151,8 +198,8 @@ export const AccountProfileDetails = (props) => {
             p: 2,
           }}
         >
-          <Button color="primary" variant="contained">
-            Actualizar
+          <Button color="primary" variant="contained"  disabled={formik.isSubmitting}  type="submit">
+            Guardar Cambios
           </Button>
         </Box>
       </Card>
